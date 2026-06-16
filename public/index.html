@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>聯絡人管理系統</title>
+  <style>
+    /* ====== 全域樣式 ====== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1e3a5f;
+      color: white;
+      padding: 18px 32px;
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+
+    /* ====== 表單區 ====== */
+    .form-card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 28px;
+    }
+
+    .form-card h2 {
+      font-size: 16px;
+      color: #1e3a5f;
+      margin-bottom: 16px;
+      border-left: 4px solid #1e90ff;
+      padding-left: 10px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .form-row label {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      font-size: 14px;
+      color: #555;
+      gap: 6px;
+    }
+
+    .form-row input {
+      padding: 10px 12px;
+      border: 1.5px solid #cdd5e0;
+      border-radius: 6px;
+      font-size: 15px;
+      transition: border 0.2s;
+    }
+
+    .form-row input:focus {
+      outline: none;
+      border-color: #1e90ff;
+    }
+
+    /* ====== 按鈕區 ====== */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:active { transform: scale(0.97); }
+    button:hover  { opacity: 0.88; }
+
+    .btn-new    { background: #1e90ff; color: white; }
+    .btn-submit { background: #28a745; color: white; }
+    .btn-edit   { background: #fd7e14; color: white; }
+    .btn-delete { background: #dc3545; color: white; }
+    .btn-pin    { background: #6f42c1; color: white; }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    /* ====== 狀態提示 ====== */
+    #statusMsg {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .msg-success { background: #d4edda; color: #155724; display: block !important; }
+    .msg-error   { background: #f8d7da; color: #721c24; display: block !important; }
+
+    /* ====== 資料列表與搜尋 ====== */
+    .list-card {
+      background: white;
+      border-radius: 10px;
+      padding: 24px 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .list-header h2 {
+      font-size: 16px;
+      color: #1e3a5f;
+      border-left: 4px solid #28a745;
+      padding-left: 10px;
+    }
+
+    .search-input {
+      padding: 8px 12px;
+      border: 1.5px solid #cdd5e0;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 240px;
+    }
+    .search-input:focus { outline: none; border-color: #28a745; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+    }
+
+    thead tr { background: #1e3a5f; color: white; }
+    thead th { padding: 11px 14px; text-align: left; font-weight: 600; }
+
+    tbody tr {
+      border-bottom: 1px solid #eef0f3;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover           { background: #eef4ff; }
+    tbody tr.selected        { background: #d0e8ff; }
+    tbody tr.pinned-row      { background: #fff9e6; } 
+    tbody tr.pinned-row:hover { background: #fff2cc; }
+
+    tbody td                 { padding: 11px 14px; }
+    tbody td:first-child     { color: #999; font-size: 13px; }
+
+    .empty-msg {
+      text-align: center;
+      color: #aaa;
+      padding: 30px;
+      font-size: 15px;
+    }
+
+    .mode-badge {
+      display: inline-block;
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    .mode-new  { background: #cce5ff; color: #004085; }
+    .mode-edit { background: #ffe5cc; color: #7a3800; }
+    
+    .update-info { font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+
+<header>📋 聯絡人管理系統</header>
+
+<div class="container">
+
+  <div class="form-card">
+    <h2>
+      資料輸入
+      <span id="modeBadge" class="mode-badge mode-new">新增模式</span>
+    </h2>
+
+    <div class="form-row">
+      <label>
+        姓名
+        <input type="text" id="inputName" placeholder="請輸入姓名" />
+      </label>
+      <label>
+        電話
+        <input type="text" id="inputPhone" placeholder="例如: 0912345678" maxlength="10" />
+      </label>
+      <label id="updaterLabel" style="display:none;">
+        修改人姓名
+        <input type="text" id="inputUpdater" placeholder="請輸入您的姓名" />
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-new"    onclick="handleNew()">＋ 新增</button>
+      <button class="btn-submit" onclick="handleSubmit()">✔ 送出</button>
+      <button class="btn-edit"   id="btnEdit"   onclick="handleEdit()"   disabled>✏ 修改</button>
+      <button class="btn-pin"    id="btnPin"    onclick="handlePin()"    disabled>📌 置頂/取消</button>
+      <button class="btn-delete" id="btnDelete" onclick="handleDelete()" disabled>✕ 刪除</button>
+    </div>
+
+    <div id="statusMsg"></div>
+  </div>
+
+  <div class="list-card">
+    <div class="list-header">
+      <h2>聯絡人列表</h2>
+      <input type="text" id="searchName" class="search-input" placeholder="🔍 輸入名字搜尋..." oninput="handleSearch()" />
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>姓名</th>
+          <th>電話</th>
+          <th>建立時間</th>
+          <th>最後修改資訊</th>
+        </tr>
+      </thead>
+      <tbody id="contactList">
+        <tr><td colspan="5" class="empty-msg">載入中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+let selectedId   = null;   
+let currentMode  = 'new';  
+let isSelectedPinned = 0;  
+let searchQuery  = '';     
+
+function showMsg(text, type) {
+  const el = document.getElementById('statusMsg');
+  el.textContent   = text;
+  el.className     = type === 'success' ? 'msg-success' : 'msg-error';
+  setTimeout(() => { el.className = ''; }, 4000); // 延長提示時間讓使用者看清楚
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  const badge = document.getElementById('modeBadge');
+  const updaterLabel = document.getElementById('updaterLabel');
+  
+  if (mode === 'edit') {
+    badge.textContent = '修改模式';
+    badge.className   = 'mode-badge mode-edit';
+    updaterLabel.style.display = 'flex'; 
+  } else {
+    badge.textContent = '新增模式';
+    badge.className   = 'mode-badge mode-new';
+    updaterLabel.style.display = 'none';
+    selectedId        = null;
+    isSelectedPinned  = 0;
+    document.getElementById('inputName').value  = '';
+    document.getElementById('inputPhone').value = '';
+    document.getElementById('inputUpdater').value = '';
+    document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('selected'));
+    document.getElementById('btnEdit').disabled   = true;
+    document.getElementById('btnPin').disabled    = true;
+    document.getElementById('btnDelete').disabled = true;
+  }
+}
+
+async function loadContacts() {
+  const url = searchQuery ? `/contacts?search=${encodeURIComponent(searchQuery)}` : '/contacts';
+  const res  = await fetch(url);
+  const data = await res.json();
+  const tbody = document.getElementById('contactList');
+
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-msg">沒有找到符合的聯絡人資料</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(c => {
+    const rowClass = c.is_pinned ? 'pinned-row' : '';
+    const pinIcon = c.is_pinned ? '📌 ' : '';
+    const updateDisplay = c.updated_at 
+      ? `<span class="update-info">${c.updated_name}<br>${c.updated_at.slice(0,16)}</span>` 
+      : '<span style="color:#ccc">-</span>';
+
+    return `
+      <tr class="${rowClass}" data-id="${c.id}" onclick="selectRow(this, ${c.id}, '${c.name}', '${c.phone}', ${c.is_pinned})">
+        <td>#${c.id}</td>
+        <td>${pinIcon}${c.name}</td>
+        <td>${c.phone}</td>
+        <td>${c.created_at ? c.created_at.slice(0,16) : ''}</td>
+        <td>${updateDisplay}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function handleSearch() {
+  searchQuery = document.getElementById('searchName').value.trim();
+  loadContacts();
+}
+
+function selectRow(row, id, name, phone, isPinned) {
+  document.querySelectorAll('tbody tr').forEach(r => r.classList.remove('selected'));
+  row.classList.add('selected');
+
+  selectedId = id;
+  isSelectedPinned = isPinned;
+  document.getElementById('inputName').value  = name;
+  document.getElementById('inputPhone').value = phone;
+  setMode('edit');
+
+  document.getElementById('btnEdit').disabled   = false;
+  document.getElementById('btnPin').disabled    = false;
+  document.getElementById('btnDelete').disabled = false;
+  
+  document.getElementById('btnPin').textContent = isPinned ? '📍 取消置頂' : '📌 置頂';
+}
+
+function handleNew() {
+  setMode('new');
+  document.getElementById('inputName').focus();
+}
+
+// 💡 核心功能：驗證電話號碼是否為 09 開頭 + 8位數字
+function validatePhone(phone) {
+  const phoneRegex = /^09\d{8}$/;
+  return phoneRegex.test(phone);
+}
+
+// 【送出】按鈕
+async function handleSubmit() {
+  const name  = document.getElementById('inputName').value.trim();
+  const phone = document.getElementById('inputPhone').value.trim();
+
+  if (!name || !phone) {
+    showMsg('請填寫姓名與電話', 'error');
+    return;
+  }
+
+  // 執行電話號碼驗證
+  if (!validatePhone(phone)) {
+    showMsg('❌ 電話格式錯誤！請輸入 09 開頭共 10 位數字號碼', 'error');
+    document.getElementById('inputPhone').focus();
+    return;
+  }
+
+  if (currentMode === 'new') {
+    const res = await fetch('/contacts', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ name, phone })
+    });
+    const result = await res.json();
+    if (res.ok) {
+      showMsg(`✅ 已新增：${name}`, 'success');
+      setMode('new');
+      loadContacts();
+    } else {
+      showMsg(`❌ 錯誤：${result.error}`, 'error'); 
+    }
+  } else {
+    await handleEdit();
+  }
+}
+
+// 【修改】按鈕
+async function handleEdit() {
+  const name  = document.getElementById('inputName').value.trim();
+  const phone = document.getElementById('inputPhone').value.trim();
+  let updater = document.getElementById('inputUpdater').value.trim();
+
+  if (!name || !phone) {
+    showMsg('請填寫姓名與電話', 'error');
+    return;
+  }
+
+  // 執行電話號碼驗證
+  if (!validatePhone(phone)) {
+    showMsg('❌ 電話格式錯誤！請輸入 09 開頭共 10 位數字號碼', 'error');
+    document.getElementById('inputPhone').focus();
+    return;
+  }
+
+  if (!updater) updater = '匿名修改者';
+
+  const res = await fetch(`/contacts/${selectedId}`, {
+    method:  'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ name, phone, updated_name: updater })
+  });
+  const result = await res.json();
+  if (res.ok) {
+    showMsg(`✅ 已修改 #${selectedId}`, 'success');
+    setMode('new');
+    loadContacts();
+  } else {
+    showMsg(`❌ 錯誤：${result.error}`, 'error');
+  }
+}
+
+async function handlePin() {
+  if (!selectedId) return;
+  const nextPinStatus = isSelectedPinned ? 0 : 1;
+
+  const res = await fetch(`/contacts/${selectedId}/pin`, {
+    method:  'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ is_pinned: nextPinStatus })
+  });
+  
+  if (res.ok) {
+    showMsg(nextPinStatus ? '📌 已置頂' : '📍 已取消置頂', 'success');
+    setMode('new');
+    loadContacts();
+  } else {
+    showMsg('❌ 置頂失敗', 'error');
+  }
+}
+
+async function handleDelete() {
+  if (!selectedId) return;
+  if (!confirm(`確定要刪除 #${selectedId} 嗎？`)) return;
+
+  const res = await fetch(`/contacts/${selectedId}`, { method: 'DELETE' });
+  if (res.ok) {
+    showMsg(`🗑 已刪除 #${selectedId}`, 'success');
+    setMode('new');
+    loadContacts();
+  } else {
+    showMsg('❌ 刪除錯誤', 'error');
+  }
+}
+
+loadContacts();
+</script>
+</body>
+</html>
